@@ -6,7 +6,6 @@ import {
   Eye,
   AlertCircle,
   CalendarDays,
-  CheckCircle2,
 } from "lucide-react";
 import { getPatient, prsForPatient, followupForPatient } from "@/lib/data";
 import { PRList } from "@/components/prs/pr-list";
@@ -39,131 +38,121 @@ export default async function InboxPage({
     issues: patient.agent.needsYou.length,
   };
 
-  const allClear =
-    counts.conflict === 0 && counts.review === 0 && counts.issues === 0;
-
   const followups = await followupForPatient(id);
   const upcoming = followups
     .filter((i) => i.status === "scheduled" && new Date(i.date) >= TODAY)
     .slice(0, 4);
 
   return (
-    <div className="flex min-h-0 w-full flex-col overflow-y-auto">
-      <header className="border-b border-border bg-background/60 px-6 py-5 backdrop-blur">
-        <div className="mx-auto flex w-full max-w-[1100px] items-start justify-between gap-4">
-          <div>
-            <span className="mono text-[11px] uppercase tracking-[0.16em] text-violet-600">
-              Review
-            </span>
-            <h2 className="mt-1 text-[20px] font-semibold tracking-tight">
-              Incoming changes & open questions
-            </h2>
-          </div>
-          {allClear && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 mono text-[10.5px] font-semibold uppercase tracking-wider text-emerald-700">
-              <CheckCircle2 className="h-3 w-3" /> All clear
-            </span>
-          )}
-        </div>
+    <div className="mx-auto flex w-full max-w-[1100px] flex-col gap-6 overflow-y-auto px-6 py-6">
+      <header>
+        <span className="mono text-[11px] uppercase tracking-[0.16em] text-violet-600">
+          Review
+        </span>
+        <h2 className="mt-1 text-[22px] font-semibold tracking-tight">
+          Incoming changes & open questions
+        </h2>
       </header>
 
-      <section className="mx-auto flex w-full max-w-[1100px] flex-col gap-6 px-6 py-6">
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <Stat
-            icon={<AlertOctagon className="h-3.5 w-3.5" />}
-            label="Conflicts"
-            value={counts.conflict}
-          />
-          <Stat
-            icon={<Eye className="h-3.5 w-3.5" />}
-            label="Needs review"
-            value={counts.review}
-          />
-          <Stat
-            icon={<AlertCircle className="h-3.5 w-3.5" />}
-            label="Agent issues"
-            value={counts.issues}
-          />
-          <Stat
-            icon={<GitMerge className="h-3.5 w-3.5" />}
-            label="Signed off"
-            value={counts.merged}
-          />
-        </div>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <Stat
+          icon={<AlertOctagon className="h-3.5 w-3.5 text-rose-500" />}
+          label="Conflicts"
+          value={counts.conflict}
+          highlight={counts.conflict > 0}
+        />
+        <Stat
+          icon={<Eye className="h-3.5 w-3.5 text-amber-500" />}
+          label="Needs review"
+          value={counts.review}
+        />
+        <Stat
+          icon={<AlertCircle className="h-3.5 w-3.5 text-amber-600" />}
+          label="Agent issues"
+          value={counts.issues}
+        />
+        <Stat
+          icon={<GitMerge className="h-3.5 w-3.5 text-emerald-500" />}
+          label="Signed off"
+          value={counts.merged}
+        />
+      </div>
 
-        {patient.agent.needsYou.length > 0 && (
-          <section className="surface flex flex-col gap-3 px-5 py-4">
-            <header className="flex items-center justify-between">
-              <span className="mono text-[10.5px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                <AlertCircle className="mr-1.5 inline h-3 w-3" />
-                Agent issues — needs you
-              </span>
-              <span className="mono text-[10.5px] text-muted-foreground/80">
-                {patient.agent.needsYou.length}
-              </span>
-            </header>
-            <ol className="flex flex-col divide-y divide-border">
-              {patient.agent.needsYou.map((q) => (
-                <li key={q.id} className="flex flex-col gap-1.5 py-3 first:pt-0 last:pb-0">
-                  <p className="text-[13.5px] font-medium leading-snug text-foreground">
-                    {q.question}
+      {patient.agent.needsYou.length > 0 && (
+        <section className="surface flex flex-col gap-3 px-5 py-4">
+          <header className="flex items-center justify-between">
+            <span className="mono text-[10.5px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              <AlertCircle className="mr-1.5 inline h-3 w-3 text-amber-500" />
+              Agent issues — needs you
+            </span>
+            <span className="mono text-[10.5px] text-muted-foreground/80">
+              {patient.agent.needsYou.length}
+            </span>
+          </header>
+          <ol className="flex flex-col gap-2.5">
+            {patient.agent.needsYou.map((q) => (
+              <li
+                key={q.id}
+                className="rounded-xl border border-amber-200/70 bg-amber-50/60 px-3.5 py-3"
+              >
+                <p className="text-[13.5px] font-medium leading-snug text-foreground">
+                  {q.question}
+                </p>
+                {q.detail && (
+                  <p className="mt-1 text-[12px] leading-snug text-muted-foreground">
+                    {q.detail}
                   </p>
-                  {q.detail && (
-                    <p className="text-[12px] leading-snug text-muted-foreground">
-                      {q.detail}
-                    </p>
-                  )}
-                  {q.options && (
-                    <div className="mt-1 flex flex-wrap gap-1.5">
-                      {q.options.map((o, i) => (
-                        <button
-                          key={i}
-                          type="button"
-                          className={
-                            i === 0
-                              ? "h-7 rounded-md bg-violet-500 px-2.5 text-[11.5px] font-medium text-white hover:bg-violet-600"
-                              : "h-7 rounded-md border border-border bg-card px-2.5 text-[11.5px] font-medium text-foreground/80 hover:bg-muted/60"
-                          }
-                        >
-                          {o}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </li>
-              ))}
-            </ol>
-          </section>
-        )}
+                )}
+                {q.options && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {q.options.map((o, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        className={
+                          i === 0
+                            ? "h-7 rounded-md bg-violet-500 px-2.5 text-[11.5px] font-medium text-white hover:bg-violet-600"
+                            : "h-7 rounded-md border border-border bg-card px-2.5 text-[11.5px] font-medium text-foreground/80 hover:bg-muted/60"
+                        }
+                      >
+                        {o}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
 
+      <section className="flex flex-col gap-3">
+        <header className="flex items-center justify-between">
+          <span className="mono text-[10.5px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+            <GitPullRequest className="mr-1.5 inline h-3 w-3 text-violet-500" />
+            Pull requests
+          </span>
+          <span className="mono text-[10.5px] text-muted-foreground/80">
+            {prs.length}
+          </span>
+        </header>
+        <PRList prs={prs} patientId={id} />
+      </section>
+
+      {upcoming.length > 0 && (
         <section className="flex flex-col gap-3">
           <header className="flex items-center justify-between">
             <span className="mono text-[10.5px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-              <GitPullRequest className="mr-1.5 inline h-3 w-3" />
-              Pull requests
+              <CalendarDays className="mr-1.5 inline h-3 w-3 text-violet-500" />
+              Watching · scheduled uploads
             </span>
             <span className="mono text-[10.5px] text-muted-foreground/80">
-              {prs.length}
+              {upcoming.length}
             </span>
           </header>
-          <PRList prs={prs} patientId={id} />
+          <FollowupTimeline items={upcoming} />
         </section>
-
-        {upcoming.length > 0 && (
-          <section className="flex flex-col gap-3">
-            <header className="flex items-center justify-between">
-              <span className="mono text-[10.5px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                <CalendarDays className="mr-1.5 inline h-3 w-3" />
-                Watching · scheduled uploads
-              </span>
-              <span className="mono text-[10.5px] text-muted-foreground/80">
-                {upcoming.length}
-              </span>
-            </header>
-            <FollowupTimeline items={upcoming} />
-          </section>
-        )}
-      </section>
+      )}
     </div>
   );
 }
@@ -172,15 +161,23 @@ function Stat({
   icon,
   label,
   value,
+  highlight,
 }: {
   icon: React.ReactNode;
   label: string;
   value: number;
+  highlight?: boolean;
 }) {
   return (
-    <div className="rounded-xl border border-border bg-card px-4 py-3">
+    <div
+      className={`rounded-xl border bg-card px-4 py-3 ${
+        highlight
+          ? "border-rose-200 shadow-[0_0_0_1px_rgba(239,68,68,0.08)_inset]"
+          : "border-border"
+      }`}
+    >
       <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-muted-foreground">
-        <span className="text-muted-foreground/70">{icon}</span>
+        {icon}
         {label}
       </div>
       <div className="mt-1.5 mono text-[22px] font-semibold tabular-nums text-foreground">

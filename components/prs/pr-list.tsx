@@ -7,10 +7,10 @@ import { formatDistanceToNowStrict } from "date-fns";
 import type { PullRequest } from "@/lib/types";
 
 const ICON: Record<PullRequest["status"], React.ReactNode> = {
-  open: <GitPullRequest className="h-4 w-4 text-muted-foreground" />,
-  merged: <GitMerge className="h-4 w-4 text-muted-foreground" />,
-  conflict: <AlertOctagon className="h-4 w-4 text-muted-foreground" />,
-  "needs-review": <Eye className="h-4 w-4 text-muted-foreground" />,
+  open: <GitPullRequest className="h-4 w-4 text-violet-500" />,
+  merged: <GitMerge className="h-4 w-4 text-emerald-500" />,
+  conflict: <AlertOctagon className="h-4 w-4 text-rose-500" />,
+  "needs-review": <Eye className="h-4 w-4 text-amber-500" />,
   declined: <XCircle className="h-4 w-4 text-muted-foreground" />,
 };
 

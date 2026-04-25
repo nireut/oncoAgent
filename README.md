@@ -1,83 +1,75 @@
 # oncoAgent
 
-oncoAgent is a patient-first clinical workspace designed to reduce registration friction and make longitudinal medical records easier to trust, review, and maintain.
+oncoAgent is the context base AI agents use to treat cancer patients. The tumor board uploads data here; the agents live here.
 
-The current product focus is oncology, with workflows tailored for cancer care teams and multidisciplinary review. The platform is intentionally designed to expand to other specialties over time.
+## What it is
 
-## Problem
+Agents need a clean, current, structured oncology case to reason over — free-text records and email chains aren't enough. oncoAgent is that case.
 
-Hospital registration is often fragmented, repetitive, and slow:
+Specialists on the tumor board (pathology, radiology, med-onc, surgery, genomics) push their findings into a per-patient vault. Agents diff every incoming change against the existing context, resolve what they can, flag the conflicts they can't, ping the right physician when a human call is needed, and reason over the assembled context to recommend treatment options at tumor board.
 
-- Patients repeatedly provide the same information across visits and departments.
-- Clinicians spend time reconciling disconnected records instead of delivering care.
-- Administrative inefficiency increases waiting times and operational cost.
+The web app is **not a tool for physicians**. It is the home for the agents. The physician-facing UI is a thin layer so the team can upload data, answer the agent's questions, and see that everything is working.
 
-In oncology, this problem is amplified because care is long-running, multi-specialist, and highly sensitive to timeline accuracy.
+> Agents work inside; you stay in the loop.
 
-## Solution
+## How it works
 
-oncoAgent introduces an automated, patient-first registration and record workflow:
+1. **Specialist uploads data** → opens a PR against the patient's vault.
+2. **Agent diffs it** against the existing context, flags conflicts inline, posts a verdict (e.g. *"Approved — no conflicts detected"*).
+3. **Agent reaches out** if it's stuck — the question lands in the right physician's panel and chat.
+4. **Physician signs off** (or declines). Unresolved conflicts block the merge; nothing else does.
+5. **Vault updates**, and the agent re-reasons over the new context. The treatment plan, follow-up schedule, and active board case all stay in sync — every change writes another PR.
 
-- Patients enter and update core information through a guided interface.
-- Patients can choose what data to share and maintain visibility into their own medical history.
-- Hospitals and clinical teams can update records during visits with a traceable change history.
+Forward-scheduled items (e.g. an MRI booked for next month) sit on the inbox as "watching." When the data lands, they auto-promote to PRs.
 
-The product models records as a versioned system so that every clinically meaningful update can be reviewed in context.
+## What's in the repo today
 
-## What Makes oncoAgent Different
+| Surface | Path | Purpose |
+| --- | --- | --- |
+| Vault grid | `/` (`app/page.tsx`) | All patients, with open-PR and conflict counts |
+| Patient vault | `/patients/[id]` (`components/vault/*`) | Structured context base, organized by specialty, with fact provenance |
+| Inbox | `/patients/[id]/inbox` | Open PRs, conflicts, agent questions, scheduled uploads |
+| PR detail | `/patients/[id]/prs/[prId]` (`components/prs/*`) | Diff view, conflict callout, agent verdict, sign-off |
+| Tumor board | `/patients/[id]/board` (`components/board/*`) | Agent-prepared treatment options, ranked, with patient-facing preview |
+| Treatment plan | `/patients/[id]/plan` | Phase timeline kept in sync via PRs |
+| Meetings | `/patients/[id]/meetings` | Agent transcribes the session and proposes plan adjustments as PRs |
+| Follow-up | `/patients/[id]/followup` | Agent-scheduled imaging, labs, visits; auto-promote to PRs when data lands |
+| Guidelines | `/patients/[id]/guidelines` | Pathway visualization with the patient's path highlighted |
+| Agent panel | right rail (`components/shell/agent-panel.tsx`) | **Now** (current action) · **Needs you** (open questions) · **Recent** (activity log) |
+| Agent chat | `components/agent-chat/*` | Streaming chat with the patient's agent, seeded with any pending question |
 
-- **Patient-controlled sharing:** data access is consent-aware, not assumed.
-- **Versioned medical history:** record changes are tracked over time so clinicians can see what changed, when, and why.
-- **Review-oriented workflow:** proposed updates can be surfaced like reviewable changes before becoming part of the active chart.
-- **Cancer care first:** the initial workflow and language are optimized for oncology teams and tumor board-style collaboration.
+The agent's reasoning surface lives in `lib/chat/`: `context.ts` builds the system prompt from the patient's facts, plan, board case, meetings, and guidelines; `tools.ts` exposes ten patient-context tools the agent calls during multi-round tool execution.
 
-## Current Product Scope
+The merge itself is handled by `app/api/review/sign-off/route.ts` — it refuses to merge while conflicts exist, applies each delta to `facts`, writes a `fact_history` row, and records a `record_commits` entry so the change is replayable.
 
-This repository includes the UI and interaction model for:
+## Stack
 
-- patient vaults and structured patient context
-- pull-request style clinical updates and conflict states
-- timeline-style change provenance
-- meeting and follow-up flows for care coordination
-- specialist-facing navigation across a patient record
+- **Next.js 16** (App Router) + **React 19** + **TypeScript 5**
+- **Tailwind CSS 4** + **shadcn** + **@base-ui/react** for the UI
+- **Supabase** (Postgres + auth) via `@supabase/ssr` and `@supabase/supabase-js`
+- **@xyflow/react** + **@dagrejs/dagre** + **@neo4j-nvl/react** for guideline and graph views
+- **motion** for transitions, **lucide-react** for icons, **cmdk** for the command palette
 
-## Tech Stack
+## Run it locally
 
-- [Next.js](https://nextjs.org) `16`
-- [React](https://react.dev) `19`
-- [TypeScript](https://www.typescriptlang.org)
-- [Tailwind CSS](https://tailwindcss.com) `4`
-- [ESLint](https://eslint.org)
-- [Entire](https://entire.io/)
-
-## Requirements
-
-- Node.js `20+` recommended
-- npm (lockfiles for npm and pnpm are present; npm is used in examples)
-
-## Getting Started
-
-Install dependencies:
+Node 20+ recommended.
 
 ```bash
 npm install
+npm run dev      # http://localhost:3000
+npm run build    # production build
+npm run start    # serve the production build
+npm run lint
 ```
 
-Run the development server:
+Supabase keys (and the chat provider config) are read from environment variables — see `lib/supabase/server.ts`, `lib/supabase/client.ts`, and the `app/api/chat` route for the variables each module expects.
 
-```bash
-npm run dev
-```
+## Status
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+**Working today:** vault, PR + diff + conflict surface, sign-off API, agent panel and chat, board / plan / meetings / follow-up / guidelines views.
 
-## Scripts
+**Mocked or in progress:** live agent ingest from external EHR sources, push notifications to physicians outside the in-app panel, multi-agent fan-out across specialty roles.
 
-- `npm run dev` - start local development server
-- `npm run build` - build for production
-- `npm run start` - run production build
-- `npm run lint` - run lint checks
+## Scope
 
-## Vision
-
-oncoAgent starts with cancer care, where data quality and collaboration pressure are highest. The longer-term goal is a reusable patient-first record workflow that can support other hospital departments without sacrificing consent, traceability, or clinical clarity.
+Oncology-first by design — the tumor board is the unit of collaboration and the workflow is built around it. The diff-and-merge model generalizes to any specialty, but that's a later concern.
