@@ -30,10 +30,6 @@ export default async function MeetingsPage({
           <h2 className="mt-1 text-[22px] font-semibold tracking-tight">
             Tumor board sessions
           </h2>
-          <p className="mt-1.5 max-w-2xl text-[13px] leading-relaxed text-muted-foreground">
-            The agent joins each session, transcribes the discussion, and proposes plan
-            adjustments as PRs you can review and merge.
-          </p>
         </div>
         <Button className="h-9 gap-1.5 rounded-lg bg-violet-500 px-3.5 text-[13px] font-medium text-white hover:bg-violet-600">
           <Plus className="h-3.5 w-3.5" />

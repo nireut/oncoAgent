@@ -140,9 +140,7 @@ export function SpecialistFolder({
       >
         <UploadCloud className="h-3.5 w-3.5" />
         <span>
-          {isDragOver
-            ? "Drop to add to this folder"
-            : "Drop files here, or click to browse"}
+          {isDragOver ? "Drop to add to this folder" : "Drop files or click to browse"}
         </span>
       </button>
       <input
@@ -174,7 +172,7 @@ export function SpecialistFolder({
         </div>
       ) : (
         <p className="mt-5 text-[12.5px] italic text-muted-foreground">
-          No files in this folder yet. Drop one above to get started.
+          No files yet.
         </p>
       )}
 

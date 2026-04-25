@@ -68,12 +68,6 @@ export default async function InboxPage({
       </header>
 
       <section className="mx-auto flex w-full max-w-[1100px] flex-col gap-6 px-6 py-6">
-        <p className="max-w-2xl text-[13px] leading-relaxed text-muted-foreground">
-          Specialists propose changes as review items. The agent runs conflict
-          checks, then you sign off or decline. Forward-scheduled items appear
-          here too — they become review items when the data lands.
-        </p>
-
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Stat
             icon={<AlertOctagon className="h-3.5 w-3.5" />}
@@ -167,10 +161,6 @@ export default async function InboxPage({
               </span>
             </header>
             <FollowupTimeline items={upcoming} />
-            <p className="text-[11.5px] italic text-muted-foreground">
-              These become PRs automatically as soon as the data lands. Until
-              then, the agent watches for them.
-            </p>
           </section>
         )}
       </section>

@@ -326,9 +326,6 @@ export function AgentChat({ patient }: { patient: Patient }) {
             <Send className="h-3.5 w-3.5" />
           </Button>
         </div>
-        <p className="mt-2 px-1 text-[10.5px] text-muted-foreground/70">
-          Cliniarc agent · gpt-5-mini via Azure
-        </p>
       </footer>
     </aside>
   );

@@ -24,9 +24,6 @@ export function RulePanel({
         <span className="mono text-[10.5px] font-semibold uppercase tracking-wider text-muted-foreground">
           Inspector
         </span>
-        <p className="mt-2 text-[13px] leading-snug text-muted-foreground">
-          Click any node in the flow to see the rule it represents and the patient records that satisfy it.
-        </p>
       </div>
     );
   }

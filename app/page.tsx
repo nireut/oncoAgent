@@ -52,11 +52,6 @@ export default async function HomePage() {
               <h1 className="mt-1 text-[28px] font-semibold tracking-tight text-foreground">
                 Patient vaults
               </h1>
-              <p className="mt-2 max-w-xl text-[14px] leading-relaxed text-muted-foreground">
-                Each vault holds a patient&apos;s structured context base — records,
-                treatment plan, imaging, and the history of every change. Agents work
-                inside; you stay in the loop.
-              </p>
             </div>
             <Button className="h-9 gap-1.5 rounded-lg bg-violet-500 px-3.5 text-[13px] font-medium hover:bg-violet-600">
               <Plus className="h-3.5 w-3.5" />

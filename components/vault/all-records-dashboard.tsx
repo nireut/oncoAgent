@@ -74,9 +74,6 @@ export function AllRecordsDashboard({
             Context graph
           </span>
         </div>
-        <p className="mt-1 text-[11.5px] text-muted-foreground/80">
-          Patient · groups · facts · sources. Drag to rearrange, scroll to zoom.
-        </p>
         <div className="mt-3">
           <FactsGraph patient={patient} facts={facts} />
         </div>

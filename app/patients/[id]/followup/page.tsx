@@ -38,10 +38,6 @@ export default async function FollowupPage({
               ? "Surveillance schedule"
               : "Treatment & monitoring schedule"}
           </h2>
-          <p className="mt-1.5 max-w-2xl text-[13px] leading-relaxed text-muted-foreground">
-            Imaging, labs, visits, and tumor board discussions auto-scheduled by the agent.
-            Status flips to overdue automatically and triggers a nudge to the care team.
-          </p>
         </div>
         <Button className="h-9 gap-1.5 rounded-lg bg-violet-500 px-3.5 text-[13px] font-medium text-white hover:bg-violet-600">
           <Plus className="h-3.5 w-3.5" />

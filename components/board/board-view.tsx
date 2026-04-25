@@ -30,13 +30,8 @@ export function BoardView({
         <div className="surface max-w-lg px-6 py-8 text-center">
           <Sparkles className="mx-auto h-5 w-5 text-violet-500" />
           <h3 className="mt-3 text-[15px] font-semibold tracking-tight">
-            No board case open
+            No active board case.
           </h3>
-          <p className="mt-1 text-[13px] text-muted-foreground">
-            When the agent detects a pattern that needs the team, it will
-            propose a case here. The case ships with ranked treatment options,
-            ready for live discussion and patient sign-off.
-          </p>
         </div>
       </div>
     );
