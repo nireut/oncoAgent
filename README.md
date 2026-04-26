@@ -14,9 +14,10 @@ oncoAgent is the context base AI agents use to treat cancer patients. The tumor 
 4. [The vault: how data is organized](#the-vault-how-data-is-organized)
 5. [The web app: every surface, in one minute each](#the-web-app-every-surface-in-one-minute-each)
 6. [The agent: what it does, what it sees](#the-agent-what-it-does-what-it-sees)
-7. [Stack](#stack)
-8. [Run it locally](#run-it-locally)
-9. [Where things live (file map)](#where-things-live-file-map)
+7. [Side challenges](#side-challenges)
+8. [Stack](#stack)
+9. [Run it locally](#run-it-locally)
+10. [Where things live (file map)](#where-things-live-file-map)
 
 ---
 
@@ -282,6 +283,48 @@ The agent is built on a structured loop, not a free-form chat agent.
 The chat endpoint (`app/api/chat/route.ts`) runs up to five rounds of tool execution before streaming the final text response.
 
 **Sign-off** is the only step that touches the vault. It runs in `app/api/review/sign-off/route.ts`: refuses while conflicts exist, then applies deltas, writes `fact_history`, records a `record_commits` row, and marks the review item merged.
+
+---
+
+## Side challenges
+
+### Fastino — Best use of [Pioneer](https://pioneer.ai/)
+
+Pioneer is the brain of our data-ingestion pipeline. Every clinical record that lands in the vault passes through it before it ever reaches Supabase or the Neo4j knowledge graph.
+
+**What we did:**
+
+1. **Synthetic medical data generation.** The entire `mama_ca/` demo dataset — Linda Hoffmann's HR+/HER2-low metastatic breast cancer case across 11 file formats (PDFs, EMLs, JSON, CSV, JSONL, Markdown) — was generated with Pioneer. Realistic enough to drive the cascade demo end-to-end, no real PHI required.
+2. **Fine-tuned GLiNER2 for clinical entity extraction.** Instead of calling a frontier LLM for every PDF / email / consult note, we trained a domain-specific GLiNER2 model on labeled oncology text. It pulls out structured entities — diagnoses, biomarkers, staging tokens, drug regimens, dates — at a fraction of the cost and latency of a general-purpose API call, deterministically.
+3. **The extraction → Supabase → Neo4j pipeline.** GLiNER2 emits typed entities → we map them into normalized Supabase rows (`patients`, `facts`, `attachments`, `review_items`) → `lib/neo4j/sync.ts` then projects the relational graph into Aura. Every cascade fact (cM0 → cM1, plan supersession, the eight downstream operational events) flows through this path.
+
+**Where it lives in the repo:**
+
+- `lib/chat/providers/pioneer.ts` — Pioneer chat provider (drop-in for the Azure provider via `CHAT_PROVIDER=pioneer`).
+- `lib/chat/tools.ts` — agent tool that calls the fine-tuned GLiNER2 NER endpoint.
+- `PIONEER-SPEC.md` — the integration spec.
+- `lib/neo4j/sync.ts` + `lib/neo4j/traverse.ts` — Supabase → Neo4j projection and graph traversal helpers.
+
+**Why this is the strongest entry:**
+
+- A *fine-tuned* model that *replaces*, not augments, frontier-LLM calls — exactly what the brief asks for.
+- All three Pioneer surfaces in production use: synthetic data generation (the dataset), evaluation against frontier models (GLiNER2 vs. an Azure baseline), adaptive inference (the chat provider routes to Pioneer's Qwen3-235B for reasoning).
+- A genuinely creative GLiNER2 use case: clinical entity extraction is hard precisely because the long tail (rare biomarkers, drug-class mentions, contradiction language) is where general LLMs hallucinate; a fine-tuned extractor anchored on labeled oncology text is the right tool.
+
+### [Aikido](https://www.aikido.dev/) — Security scanning
+
+The repo is connected to Aikido for continuous code-scanning. We're not running Aikido as a checkbox; we acted on every finding in the report:
+
+- **Lodash CVE-2026-2950** (prototype pollution in `_.unset` / `_.omit`, transitive dep at 4.17.23). **Fixed.** Pinned via `pnpm.overrides` to `^4.18.0`; the lockfile now resolves `lodash@4.18.1`.
+- **Path-traversal in `scripts/build-graph.ts:64,72`** (the `listFiles` / `readJson` helpers consumed paths). **Fixed.** Both helpers now route through `assertWithinDataRoot()` — any resolved path that escapes `~/Desktop/onco_data/mama_ca/` is rejected.
+- **Path-traversal in `.tavily/research.py:223`** (write-anywhere via `--patients-json`). **Fixed.** New `_safe_write_target()` resolves the path, refuses anything outside CWD, and refuses to follow symlinks before writing.
+- **"Exposed secrets" in `scripts/build-graph.ts:1046,1049`** (high severity in the report). **Diagnosed as false positive and documented** — the `key:` field is a clinical-fact identifier (`diagnosis.her2`, `genomics.pik3ca` — HER2 receptor and PIK3CA gene), not an API key. Comment added at the facts-block declaration so future scans understand the context.
+
+The fixes shipped in commit `df5b1f6` ("Security: lodash CVE-2026-2950 + harden path I/O"). Screenshots of the original Aikido report are in the submission package.
+
+### [Entire](https://entire.io/) — Agent activity tracking
+
+Entire is wired up across the build to track everything the engineering agents do as they assemble the demo: every checkpoint, every prompt, every tool call. The full agent trail lives in the project's Entire workspace and is part of the submission. This is how we keep the build auditable end-to-end — the same accountability story the oncoAgent itself promises for clinicians (every fact links back to its source) applied to the development process behind it.
 
 ---
 
